@@ -7,7 +7,7 @@ usage(){ #help
   printf "\t-h displays this help message \n\n"
   printf "\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \n\n"
   printf "\t-f sudo apt full-upgrade - for release updates ie from 20.04LTS to 22.04LTS \n\n"
-  printf "\t-x if apt can't install updaets, purge apt config files, get fresh config files, resolve package conflicts, & try >
+  printf "\t-x if apt can't install updaets, purge apt config files, get fresh config files, resolve package conflicts \n\n" #& try >
   exit 1
 }
 
