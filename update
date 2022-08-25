@@ -1,0 +1,101 @@
+#!/bin/zsh
+
+usage(){ #help
+  printf "\nUsage: With no flag, update will automate the update process by running sudo apt update then apt list --updates"
+  printf "\nThe user can review the list and decide to upgrade packages \n\n"
+  printf "update can also be used with the following flags; \n\n"
+  printf "\t-h displays this help message \n\n"
+  printf "\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \n\n"
+  printf "\t-f sudo apt full-upgrade - for release updates ie from 20.04LTS to 22.04LTS \n\n"
+  printf "\t-x if apt can't install updaets, purge apt config files, get fresh config files, resolve package conflicts, & try >
+  exit 1
+}
+
+sudo_check(){
+  if [ "$(id -u)" -ne 0 ]; then
+    printf "\n\t$0 must be run as sudo\n\n"
+    exit 3
+  else
+    sudook=1
+  fi
+}
+
+update_check(){
+  printf "\nsudo apt update\n"
+  apt update
+
+  printf "\napt list --upgradeable\n"
+  apt list --upgradeable
+}
+
+noflag(){ #if no flags are specified
+  update_check
+  printf "\nUpdate? Y/N "
+  read updatechoice
+  case $updatechoice in
+    [yY]) printf "\n" && apt upgrade -y;;
+    [nN]) exit 0 ;;
+       *) exit 2 ;;
+  esac
+}
+
+badflag() { # any invalid argument
+  printf "\n\nInvalid flag or argument: \n"
+  usage && exit 1
+}
+
+popos() { # check if System76 Pop!_OS
+  if [ -n "$(cat /etc/os-release | grep  "Pop\!_OS")" ]; then
+    update_check && pop-upgrade release upgrade
+  else
+    badflag
+  fi
+}
+
+
+clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-update-gir1-2-mutter-10-libmutter-10-0
+
+  # purge old apt configuration files
+  sudo rm -rf /var/lib/apt/lists/
+  sudo apt clean 
+  sudo apt autoclean
+
+  # get fresh configuration files, resolve package conflicts
+  sudo apt update
+  sudo dpkg --configure -a
+  sudo apt --fix-broken install
+
+  ## and finally resume the upgrade
+  #sudo apt upgrade -y
+}
+ ------------Main--------------------------------------
+
+sudo_check
+
+
+if [ -n "$1" ]; then
+  if [ -z "$(echo "$1" | grep "-")" ]; then # not a flag
+    badflag
+  fi
+
+  while getopts ":hpfx" flag ; do
+    case $flag in
+      h) usage && exit 0 ;;
+      p) popos ;;
+      f) update_check && sudo apt full-upgrade ;;
+      x) clearerrors ;;
+      *) badflag ;;
+    esac
+  done
+else
+noflag
+fi
+
+# ---------------------------------------------------------
+# exit status
+# 3 not sudo
+# 2 user chooses no
+# 1 invalid or no entry
+# ---------------------------------------------------------
+
+# fin
