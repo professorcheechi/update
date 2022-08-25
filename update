@@ -8,22 +8,23 @@ usage(){ #help
   printf "\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \n\n"
   printf "\t-f sudo apt full-upgrade - for release updates ie from 20.04LTS to 22.04LTS \n\n"
   printf "\t-x if apt can't install updaets, purge apt config files, get fresh config files, resolve package conflicts \n\n" #& try >
-  exit 1
+  #exit 1
 }
 
 sudo_check(){
   if [ "$(id -u)" -ne 0 ]; then
     printf "\n\t$0 must be run as sudo\n\n"
-    exit 3
+    usage && exit 3
   else
     sudook=1
   fi
 }
 
 update_check(){
-  printf "\nsudo apt update\n"
-  apt update
-
+  if [ -z "$errorretry" ]; then
+    printf "\nsudo apt update\n"
+    apt update
+  fi
   printf "\napt list --upgradeable\n"
   apt list --upgradeable
 }
@@ -67,6 +68,8 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
 
   ## and finally resume the upgrade
   #sudo apt upgrade -y
+
+  errorretry=1 && noflag
 }
  ------------Main--------------------------------------
 
