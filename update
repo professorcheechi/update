@@ -105,12 +105,17 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
 
  #------------Main--------------------------------------
 
-sudo_check
+
+
 
 
 if [ -n "$1" ]; then
   if [ -z "$(echo "$1" | grep "-")" ]; then # not a flag
     badflag
+  fi
+
+  if [ -z "$(echo "1" | grep v)" ]; then
+    sudo_check
   fi
 
   while getopts ":cfhpqrvxy" flag ; do
@@ -121,12 +126,15 @@ if [ -n "$1" ]; then
       p) popos                                                      ;;
       q) version_check && update_check && autoupgrade && autoremove ;;
       r) update_check && sudo apt full-upgrade                      ;;
-      v) version_check                                              ;;
+      v) nosudo=1 && version_check                                  ;;
       x) clearerrors                                                ;;
       y) noretry=1 && clearerrors                                   ;;
       *) badflag                                                    ;;
     esac
   done
+
+
+
 else
 noflag
 fi
