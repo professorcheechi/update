@@ -74,7 +74,7 @@ popos() { # check if System76 Pop!_OS
 
 autoremove() {
   printf "\n sudo apt autoremove \n"
-  apt autoremove
+  apt-get -y autoremove
 }
 
 autoupgrade() {
