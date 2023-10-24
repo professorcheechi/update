@@ -51,7 +51,7 @@ update_check() {
     apt-get update
   #fi
   printf "\napt-get list --upgradeable\n"
-  apt-get list --upgradeable
+  apt list --upgradeable
 }
 
 noflag() { #if no flags are specified
