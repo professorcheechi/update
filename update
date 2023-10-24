@@ -1,5 +1,9 @@
 #!/bin/zsh
 
+###############
+# Functions   #
+###############
+
 usage() { #help
   printf "\nUsage: With no flag, update will automate the update process by running sudo apt update then apt list --updates \
   \nThe user can review the list and decide to upgrade packages \
@@ -15,10 +19,14 @@ usage() { #help
   \n\t\t gets fresh config files, \
   \n\t\t resolves package conflicts, \
   \n\t\t then try to upgrade again \
-  \n\t-y same as -x but do not try again to update \  
+  \n\t-y same as -x but do not try again to update \
   \n\n"
 }
 
+badflag() { # any invalid argument
+  printf "\n\nInvalid flag or argument: \n"
+  usage && exit 1
+}
 
 sudo_check() {
   if [ "$(id -u)" -ne 0 ]; then
@@ -29,6 +37,14 @@ sudo_check() {
   fi
 }
 
+version_check() {
+  printf "Linux Kernel " 
+  uname -r
+  printf "\nDebian version: "
+  cat /etc/debian_version
+  lsb_release -a
+}
+
 update_check() {
   #if [ -z "$errorretry" ]; then
     printf "\nsudo apt-get update\n"
@@ -36,14 +52,6 @@ update_check() {
   #fi
   printf "\napt-get list --upgradeable\n"
   apt-get list --upgradeable
-}
-
-version_check() {
-  printf "Linux Kernel " 
-  uname -r
-  printf "\nDebian version: "
-  cat /etc/debian_version
-  lsb_release -a
 }
 
 noflag() { #if no flags are specified
@@ -56,11 +64,6 @@ noflag() { #if no flags are specified
     [nN]) exit 0 ;;
        *) exit 4 ;;
   esac
-}
-
-badflag() { # any invalid argument
-  printf "\n\nInvalid flag or argument: \n"
-  usage && exit 1
 }
 
 popos() { # check if System76 Pop!_OS
@@ -102,10 +105,12 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
   fi
 }
 
- #------------Main--------------------------------------
+###############
+# Main        #
+###############
 
 if [ -n "$1" ]; then
-  if [ -z "$(echo "$1" | grep "-")" ]; then # not a flag
+  if [ -z "$(echo "$1" | grep "-")" ]; then # this script accepts flags eg -h, not args
     badflag
   fi
 
@@ -128,15 +133,23 @@ else
   noflag
 fi
 
-# ---------------------------------------------------------
-# exit status
+###############
+# exit status #
+###############
+
 # 4 user chooses no
 # 3 not sudo
 # 1 invalid or no entry
-# ---------------------------------------------------------
+
+
+###############
+# Notes       #
+###############
 
 ## updating major versions eg bullseye to bookworm (11 to 12)
 ## sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
 ## sudo update -f
 
-# fin
+###############
+# fin         #
+###############
