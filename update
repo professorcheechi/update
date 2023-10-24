@@ -81,6 +81,10 @@ autoupgrade() {
   apt-get -y upgrade
 }
 
+autofull() {
+  apt-get -y full-upgrade
+}
+
 clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-update-gir1-2-mutter-10-libmutter-10-0
 
   # purge old apt configuration files
@@ -98,9 +102,7 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
     sudo apt upgrade -y
   fi
 }
-autofull() {
-  apt-get -y full-upgrade
-}
+
  #------------Main--------------------------------------
 
 sudo_check
@@ -111,8 +113,9 @@ if [ -n "$1" ]; then
     badflag
   fi
 
-  while getopts ":fhpqrvxy" flag ; do
+  while getopts ":cfhpqrvxy" flag ; do
     case $flag in
+      c) sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list       ;; # not listed in help 
       f) version_check && update_check && autofull && autoremove    ;;
       h) usage && exit 0                                            ;;
       p) popos                                                      ;;
