@@ -33,10 +33,10 @@ sudo_check() {
 update_check() {
   if [ -z "$errorretry" ]; then
     printf "\nsudo apt update\n"
-    apt update
+    apt-get update
   fi
   printf "\napt list --upgradeable\n"
-  apt list --upgradeable
+  apt-get list --upgradeable
 }
 
 version_check() {
