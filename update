@@ -98,7 +98,9 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
     sudo apt upgrade -y
   fi
 }
-
+autofull() {
+  apt-get -y full-upgrade
+}
  #------------Main--------------------------------------
 
 sudo_check
@@ -111,15 +113,15 @@ if [ -n "$1" ]; then
 
   while getopts ":fhpqrvxy" flag ; do
     case $flag in
-      f) version_check && update_check && sudo apt full-upgrade && autoremove ;;
-      h) usage && exit 0                                                      ;;
-      p) popos                                                                ;;
-      q) version_check && update_check && autoupgrade && autoremove           ;;
-      r) update_check && sudo apt full-upgrade                                ;;
-      v) version_check                                                        ;;
-      x) clearerrors                                                          ;;
-      y) noretry=1 && clearerrors                                             ;;
-      *) badflag                                                              ;;
+      f) version_check && update_check && autofull && autoremove    ;;
+      h) usage && exit 0                                            ;;
+      p) popos                                                      ;;
+      q) version_check && update_check && autoupgrade && autoremove ;;
+      r) update_check && sudo apt full-upgrade                      ;;
+      v) version_check                                              ;;
+      x) clearerrors                                                ;;
+      y) noretry=1 && clearerrors                                   ;;
+      *) badflag                                                    ;;
     esac
   done
 else
@@ -132,5 +134,9 @@ fi
 # 3 not sudo
 # 1 invalid or no entry
 # ---------------------------------------------------------
+
+## updating major versions eg bullseye to bookworm (11 to 12)
+## sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
+## sudo update -f
 
 # fin
