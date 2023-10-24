@@ -1,24 +1,27 @@
 #!/bin/zsh
 
-usage(){ #help
+usage() { #help
   printf "\nUsage: With no flag, update will automate the update process by running sudo apt update then apt list --updates \
   \nThe user can review the list and decide to upgrade packages \
   \n\nupdate can also be used with the following flags; \
+  \n\t-f sudo apt full-upgrade - for release updates (ie from 20.04LTS to 22.04LTS) \
   \n\t-h displays this help message \
   \n\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \
-  \n\t-f sudo apt full-upgrade - for release updates (ie from 20.04LTS to 22.04LTS) \
+  \n\t-q 'quiet' operation, no interaction needed \
+  \n\t-r update but do not run autoremove at the end \
+  \n\t-v show version info for both kernel & distro \
   \n\t-x if apt can't install updates; \
-  \n\t\t purge apt config files, \
-  \n\t\t get fresh config files, \
-  \n\t\t resolve package conflicts, \
-  \n\t\t & try again \
-  \n\t-y same as -x but do not try again to update \
-  \n\t-r update but do not run autoremove at the end \n\n"
+  \n\t\t purges apt config files, \
+  \n\t\t gets fresh config files, \
+  \n\t\t resolves package conflicts, \
+  \n\t\t then try to upgrade again \
+  \n\t-y same as -x but do not try again to update \  
+  \n\n"
   exit 1
 }
 
 
-sudo_check(){
+sudo_check() {
   if [ "$(id -u)" -ne 0 ]; then
     printf "\n\t$0 must be run as sudo\n\n"
     usage && exit 3
@@ -27,7 +30,7 @@ sudo_check(){
   fi
 }
 
-update_check(){
+update_check() {
   if [ -z "$errorretry" ]; then
     printf "\nsudo apt update\n"
     apt update
@@ -36,14 +39,23 @@ update_check(){
   apt list --upgradeable
 }
 
-noflag(){ #if no flags are specified
+version_check() {
+  printf "Linux Kernel " 
+  uname -r
+  printf "\nDebian version: "
+  cat /etc/debian_version
+  lsb_release -a
+}
+
+noflag() { #if no flags are specified
+  version_check
   update_check
   printf "\nUpdate? Y/N "
   read updatechoice
   case $updatechoice in
-    [yY]) printf "\n" && apt upgrade -y;;
+    [yY]) printf "\n" && autoupgrade ;;
     [nN]) exit 0 ;;
-       *) exit 2 ;;
+       *) exit 4 ;;
   esac
 }
 
@@ -65,6 +77,9 @@ autoremove() {
   apt autoremove
 }
 
+autoupgrade() {
+  apt-get -y upgrade
+}
 
 clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-update-gir1-2-mutter-10-libmutter-10-0
 
@@ -94,15 +109,17 @@ if [ -n "$1" ]; then
     badflag
   fi
 
-  while getopts ":hpfxr" flag ; do
+  while getopts ":fhpqrvxy" flag ; do
     case $flag in
-      h) usage && exit 0;;
-      p) popos;;
-      f) update_check && sudo apt full-upgrade && autoremove;;
-      x) clearerrors;;
-      y) noretry=1 && clearerrors;;
-      r) update_check && sudo apt full-upgrade;;
-      *) badflag;;
+      f) version_check && update_check && sudo apt full-upgrade && autoremove ;;
+      h) usage && exit 0                                                      ;;
+      p) popos                                                                ;;
+      q) version_check && update_check && autoupgrade && autoremove           ;;
+      r) update_check && sudo apt full-upgrade                                ;;
+      v) version_check                                                        ;;
+      x) clearerrors                                                          ;;
+      y) noretry=1 && clearerrors                                             ;;
+      *) badflag                                                              ;;
     esac
   done
 else
@@ -111,8 +128,8 @@ fi
 
 # ---------------------------------------------------------
 # exit status
+# 4 user chooses no
 # 3 not sudo
-# 2 user chooses no
 # 1 invalid or no entry
 # ---------------------------------------------------------
 
