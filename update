@@ -99,7 +99,7 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
   fi
 }
 
- ------------Main--------------------------------------
+ #------------Main--------------------------------------
 
 sudo_check
 
