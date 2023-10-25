@@ -40,8 +40,9 @@ sudo_check() {
 version_check() {
   printf "Linux Kernel " 
   uname -r
-  printf "\nDebian version: "
+  printf "Debian version: "
   cat /etc/debian_version
+  printf "\n"
   lsb_release -a
 }
 
