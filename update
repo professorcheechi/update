@@ -13,6 +13,7 @@ usage() { #help
   \n\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \
   \n\t-q 'quiet' operation, no interaction needed \
   \n\t-r update but do not run autoremove at the end \
+  \n\t-u check for updates but do not apply \
   \n\t-v show version info for both kernel & distro \
   \n\t-x if apt can't install updates; \
   \n\t\t purges apt config files, \
@@ -38,7 +39,7 @@ sudo_check() {
 }
 
 version_check() {
-  printf "Linux Kernel " 
+  printf "Linux Kernel "
   uname -r
   printf "Debian version: "
   cat /etc/debian_version
@@ -123,6 +124,7 @@ if [ -n "$1" ]; then
       p) sudo_check && popos                                                      ;;
       q) version_check && sudo_check && update_check && autoupgrade && autoremove ;;
       r) sudo_check && update_check && sudo apt full-upgrade                      ;;
+      u) version_check && sudo_check && update_check                              ;;
       v) version_check                                                            ;;
       x) sudo_check && clearerrors                                                ;;
       y) noretry=1 && sudo_check && clearerrors                                   ;;
