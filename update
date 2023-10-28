@@ -40,7 +40,7 @@ sudo_check() {
 }
 
 version_check() {
-  printf "Linux Kernel "
+  printf "\nLinux Kernel "
   uname -r
   printf "Debian version: "
   cat /etc/debian_version
