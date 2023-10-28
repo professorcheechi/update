@@ -13,7 +13,7 @@ usage() { #help
   \n\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \
   \n\t-q 'quiet' operation, no interaction needed \
   \n\t-r update but do not run autoremove at the end \
-  \n\t-u check for updates but do not apply \
+  \n\t-u check for updates but do not upgrade \
   \n\t-v show version info for both kernel & distro \
   \n\t-x if apt can't install updates; \
   \n\t\t purges apt config files, \
