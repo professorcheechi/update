@@ -8,20 +8,21 @@ usage() { #help
   printf "\nUsage: With no flag, update will automate the update process by running sudo apt update then apt list --updates \
   \nThe user can review the list and decide to upgrade packages \
   \n\nupdate can also be used with the following flags; \
-  \n\t-f sudo apt full-upgrade - for release updates (ie from 20.04LTS to 22.04LTS) \
-  \n\t-h displays this help message \
-  \n\t-p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \
-  \n\t-q 'quiet' operation, no interaction needed \
-  \n\t-r update but do not run autoremove at the end \
-  \n\t-s if important updates have been held back, aptitude safe-update \
-  \n\t-u check for updates but do not upgrade \
-  \n\t-v show version info for both kernel & distro \
-  \n\t-x if apt can't install updates; \
+  \n\t -b apt --fix-broken install \
+  \n\t -f sudo apt full-upgrade - for release updates (ie from 20.04LTS to 22.04LTS) \
+  \n\t -h displays this help message \
+  \n\t -p for [Pop!_OS], run pop-upgrade release upgrade - (should be run only after all other updates completed) \
+  \n\t -q 'quiet' operation, no interaction needed \
+  \n\t -r update but do not run autoremove at the end \
+  \n\t -s if important updates have been held back, aptitude safe-update \
+  \n\t -u check for updates but do not upgrade \
+  \n\t -v show version info for both kernel & distro \
+  \n\t -x if apt can't install updates; \
   \n\t\t purges apt config files, \
   \n\t\t gets fresh config files, \
   \n\t\t resolves package conflicts, \
   \n\t\t then try to upgrade again \
-  \n\t-y same as -x but do not try again to update \
+  \n\t -y same as -x but do not try again to update \
   \n\n"
 }
 
@@ -95,6 +96,9 @@ safe_update() {
   aptitude safe-upgrade
 }
 
+fix_broken() {
+  sudo apt --fix-broken install
+}
 
 clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-update-gir1-2-mutter-10-libmutter-10-0
   # purge old apt configuration files
@@ -106,7 +110,7 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
   # get fresh configuration files, resolve package conflicts
   updatecheck
   sudo dpkg --configure -a
-  sudo apt --fix-broken install
+  fix_broken
 
   ## and finally resume the upgrade unless flag prevents
   if [ -z "$noretry" ]; then
@@ -123,8 +127,9 @@ if [ -n "$1" ]; then
     badflag
   fi
 
-  while getopts ":cfhpqrsuvxy" flag ; do
+  while getopts ":bcfhpqrsuvxy" flag ; do
     case $flag in
+      b) sudo_check && fix_broken                                                 ;;
       c) sudo_check && sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list       ;; # not listed in help 
       f) version_check && sudo_check && update_check && autofull && autoremove    ;;
       h) usage && exit 0                                                          ;;
