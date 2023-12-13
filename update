@@ -1,8 +1,69 @@
-#!/bin/zsh
+#!/bin/bash
 
-###############
-# Functions   #
-###############
+#HELP00:           Script Name: update
+#HELP01:               Purpose: simplify system updates across multiple debian based distros
+#HELP02:                 Owner:  
+#HELP03:               License:  GPL v3.0
+#HELP04:               Created:  August 2020
+#HELP05:              Category:  system utilities
+#HELP06:            Input File:  stdin
+#HELP07:           Output File:  stdout, /bin, /usr/bin, /sbin, etc
+#HELP08:              Log path:  
+#HELP09:                Syntax:  sudo update -q
+#HELP10:               Example:  sudo update -q
+#HELP11:              Commands:  apt, nala, apt-get
+#HELP12:      Production Files:  
+#HELP13:    Ancillary Programs:  pop-upgrade
+#HELP14:     Ancillary Scripts:
+#HELP15:         Local Scripts:
+#HELP16: crontask/systemd srvc:
+#HELP17: task/service schedule:
+#HELP18:        Kernel Version: >2.6
+#HELP19:            DB Version:
+#HELP20:            Audit Date:
+#HELP21:               Auditor:
+#HELP22:       Approve Date(s):
+#HELP23:           Approver(s):
+#HELP24: Date Checked Into CVS:
+#HELP25:   Checked Into CVS By:
+#HELP26:               Version:  1.5
+#HELP27:               Changes:
+#HELP28:            Github url: https://github.com/professorcheechi/update/
+#HELP29:
+#HELP30:
+
+##############################################################
+# Version history ############################################
+##############################################################
+
+# 1.0 automate update/upgrade, 1 script for both
+# 1.1 add pop-upgrade for Pop!_OS
+# 1.2 additional options & flags
+# 1.3 further adding features, formatting
+# 1.4 aptitude for safe update/ "held back" updates
+# 1.5 add nala functionality, formatting
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Exit codes !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# 6 multiple os versions/codenames in /etc/apt/sources.list
+# 5 invalid or no entry
+# 4 user chooses no
+# 3 not sudo
+
+
+##############################################################
+# flow of script / notes / todo ##############################
+##############################################################
+
+## updating major versions eg bullseye to bookworm (11 to 12)
+## sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
+## sudo update -f
+
+#{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}
+# Define functions {}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}
+#{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}
 
 usage() { #help
   printf "\nUsage: With no flag, update will automate the update process by running sudo apt update then apt list --updates \
@@ -49,14 +110,75 @@ version_check() {
   lsb_release -a
 }
 
-update_check() {
-  #if [ -z "$errorretry" ]; then
-    printf "\nsudo apt-get update\n"
-    apt-get update
-  #fi
-  printf "\napt-get list --upgradeable\n"
-  apt list --upgradeable
+nalacheck() {
+  nalasources=/etc/apt/sources.list.d/nala-sources.list
+  which nala | grep -qi 'not found' || nalaok=1
 }
+
+update_check() {
+  if (( "$nalaok" = 1 )); then
+    if ! [ -f "$nalasources" ]; then
+      nala fetch -y --auto --fetches 8 --country US
+    fi
+
+    printf "\n sudo nala --update \n"
+    nala --update
+    printf "\n Upgradeable packages: \b"
+    nala list -u
+  else
+    printf "\n sudo apt-get update \n"
+    apt-get update
+    printf "\n Upgradeable packages: \b"
+    apt list --upgradeable
+  fi
+}
+
+
+
+########### wip 
+version_change() {
+
+  #check if debian, ubuntu, pop, etc 
+  lsb=(lsb_release -a)
+  distributor=(echo "$lsb" | grep Distributor | awk '{print $3}')
+  codename=(echo "$lsb" | grep Codename | awk '{print $2}')
+  
+  if [[ "$distributor" -ne "Debian" ]]; then
+    printf "\n Currently this function only works on Debian, no derivative distros \n"
+    exit 7
+  fi
+
+
+  current_name=(cat /etc/apt/sources.list | grep deb | awk '{print $3}' | sort -u)
+  case $current_name in
+    1) 
+        if [[ "$codename" -eq "$current_name" ]]; then
+          printf "\n New OS codename: \n"
+          read new_name 
+        fi ;;
+    *) printf "\n Please review /etc/apt/sources.list we will not automatically update it as multiple versions are listed among sources \n"
+       exit 6 ;;
+  esac
+
+  # need to validate the new name and/or automate. can we wget or curl so user input is not necessary?
+
+  if (( "$nalaok" = 1 )); then
+    sed -i "s/$current_name/$new_name/g" /etc/apt/sources.list.d/nala-sources.list
+  fi
+
+  # debian
+  sed -i "s/$current_name/$new_name/g" /etc/apt/sources.list
+
+  # Pop!_OS
+  # /etc/apt/sources.list.d
+  # .../pop-os-apps.sources
+  # .../pop-os-release.sources
+  # .../system.sources
+  ## these would be updated with pop-upgrade this function should not be run on Pop!_OS
+
+}
+########### wip 
+
 
 noflag() { #if no flags are specified
   version_check
@@ -65,7 +187,7 @@ noflag() { #if no flags are specified
   read updatechoice
   case $updatechoice in
     [yY]) printf "\n" && autoupgrade ;;
-    [nN]) exit 0 ;;
+    [nN]) exit 5 ;;
        *) exit 4 ;;
   esac
 }
@@ -79,20 +201,34 @@ popos() { # check if System76 Pop!_OS
 }
 
 autoremove() {
-  printf "\n sudo apt autoremove \n"
-  apt-get -y autoremove
+  if (( "$nalaok" = 1 )); then
+    printf "\n nala autoremove -y \n"
+    nala autoremove -y
+    #nala autopurge
+  else
+    printf "\n sudo apt autoremove \n"
+    apt-get -y autoremove
+  fi
 }
 
 autoupgrade() {
-  apt-get -y upgrade
+  if (( "$nalaok" = 1 )); then
+     nala upgrade -y --no-full
+  else
+    apt-get -y upgrade
+  fi
 }
 
 autofull() {
-  apt-get -y full-upgrade
+  if (( "$nalaok" = 1 )); then
+    nala upgrade -y --full  
+  else
+    apt-get -y full-upgrade
+  fi
 }
 
 safe_update() {
-  which aptitude | grep -q "not found" && apt-get -y aptitude
+  which aptitude | grep -qi "not found" && apt-get -y aptitude
   aptitude safe-upgrade
 }
 
@@ -118,19 +254,21 @@ clearerrors() { # https://superuser.com/questions/1732810/pop-os-22-04-cant-upda
   fi
 }
 
-###############
-# Main        #
-###############
+##############################################################
+# main program ###############################################
+##############################################################
 
 if [ -n "$1" ]; then
   if [ -z "$(echo "$1" | grep "-")" ]; then # this script accepts flags eg -h, not args
     badflag
   fi
 
+  nalacheck
+
   while getopts ":bcfhpqrsuvxy" flag ; do
     case $flag in
       b) sudo_check && fix_broken                                                 ;;
-      c) sudo_check && sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list       ;; # not listed in help 
+      c) sudo_check && version_change                                             ;; # purposely not listed in help 
       f) version_check && sudo_check && update_check && autofull && autoremove    ;;
       h) usage && exit 0                                                          ;;
       p) sudo_check && popos                                                      ;;
@@ -149,23 +287,6 @@ else
   noflag
 fi
 
-###############
-# exit status #
-###############
-
-# 4 user chooses no
-# 3 not sudo
-# 1 invalid or no entry
-
-
-###############
-# Notes       #
-###############
-
-## updating major versions eg bullseye to bookworm (11 to 12)
-## sudo sed -i 's/bullseye/bookworm/g' /etc/apt/sources.list
-## sudo update -f
-
-###############
-# fin         #
-###############
+##############################################################
+# End ########################################################
+##############################################################
