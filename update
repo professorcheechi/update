@@ -161,6 +161,9 @@ version_change() {
   esac
 
   # need to validate the new name and/or automate. can we wget or curl so user input is not necessary?
+  # curl -L -s https://www.debian.org/releases/stable/releasenotes | grep -i "release information" | awk '{print $4}' | sed 's/&ldquo;//g;s/&rdquo;//g'
+
+
 
   if (( "$nalaok" = 1 )); then
     sed -i "s/$current_name/$new_name/g" /etc/apt/sources.list.d/nala-sources.list
