@@ -133,7 +133,9 @@ update_check() {
   fi
 }
 
-
+clean() {
+  sudo apt-get clean
+}
 
 ########### wip 
 version_change() {
